@@ -1,69 +1,16 @@
---this script is designed to work with the Roblox game engine and is intended for educational purposes only. It modifies the game's behavior by applying ESP (Extra Sensory Perception) to enemy models and changing their hitbox size and transparency.
--- It also sends notifications to the player when certain events occur, such as loading the script and spawning new enemies. The script uses a custom ESP library to achieve this functionality.
--- The script is not intended for use in any malicious or harmful way and should only be used in a safe and controlled environment.
--- Please ensure that you have permission to use this script in the game you are playing and that it does not violate any terms of service or community guidelines.
+--[[
+    FrontLine ESP Loader
+    Carrega automaticamente o script completo
+    Uso: loadstring(game:HttpGet("URL_DO_SEU_REPOSITORIO/loader.lua"))()
+]]
 
+-- Carregar biblioteca ESP customizada
+local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/Script_FrontLine/refs/heads/main/esp-library.lua"))()
 
--- this is my script, please do not steal it or claim it as your own. I worked hard on this and would appreciate it if you could respect my work. Thank you!p
--- kind regards, storager.kkr
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
-
--- Configurações do menu ImGui
--- ImGui menu settings
+-- Configurações do menu
 local menuOpen = true
 local config = {
-    -- Hitbox settings
+    -- Hitbox settings (limite máximo 20 para tiros válidos)
     hitboxSize = {x = 10, y = 10, z = 10},
     transparency = 1,
     notifications = false,
@@ -89,34 +36,27 @@ local size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitbox
 local trans = config.transparency
 local notifications = config.notifications
  
--- verbergt de tijd waneer het script geladen is
 -- Store the time when the code starts executing
 local start = os.clock()
 
--- stuurt een notificatie dat het script aan het laden is
 -- Send a notification saying that the script is loading
 game.StarterGui:SetCore("SendNotification", {
-   Title = "Script",
+   Title = "FrontLine ESP",
    Text = "Loading...",
    Icon = "",
-   Duration = 5
+   Duration = 3
 })
--- zoek de esp library op github executes het  
--- Load the ESP library and turns it on
-local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/Script_FrontLine/refs/heads/main/esp-library.lua"))()
-esp:Toggle(true)
 
-
--- zet de ESP instellingen in
 -- Configure ESP settings
+esp:Toggle(true)
 esp.Boxes = config.boxes
 esp.Names = config.names
 esp.Tracers = config.tracers
 esp.Players = config.players
+esp.Skeleton = config.skeleton
 esp.Thickness = config.thickness
 
--- voegt een object listener toe aan de workspace om vijandige modellen te detecteren
--- Add an object listener to the workspace to detect enemy models
+-- Add object listener for enemy models
 esp:AddObjectListener(workspace, {
    Name = "soldier_model",
    Type = "Model",
@@ -124,8 +64,6 @@ esp:AddObjectListener(workspace, {
        return Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
    end,
  
-   -- specifeseer de primaire deel van het model als de "HumanoidRootPart" 
-   -- Specify the primary part of the model as the HumanoidRootPart
    PrimaryPart = function(obj)
        local root
        repeat
@@ -135,8 +73,6 @@ esp:AddObjectListener(workspace, {
        return root
    end,
     
-   -- usa um validator functie om te controleren of de modellen geen "friendly_marker" child hebben
-   -- Use a validator function to ensure that models do not have the "friendly_marker" child
    Validator = function(obj)
        task.wait(1)
        if obj:FindFirstChild("friendly_marker") then
@@ -150,13 +86,7 @@ esp:AddObjectListener(workspace, {
        return true
    end,
  
-   -- maak een niewe naam voor enemy modellen ( onnodig maar kan handig zijn)
-    -- Create a new name for enemy models (unnecessary but can be useful)
-   -- Set a custom name to use for the enemy models
    CustomName = "?",
- 
-   -- zet de esp aan voor enemy modellen
-   -- Enable the ESP for enemy models
    IsEnabled = "enemy"
 })
  
@@ -186,12 +116,11 @@ end
 local function handleDescendantAdded(descendant)
    task.wait(1)
  
-   -- If the new descendant is an enemy model and notifications are enabled, send a notification
    if descendant.Name == "soldier_model" and descendant:IsA("Model") and not descendant:FindFirstChild("friendly_marker") then
        if notifications then
            game.StarterGui:SetCore("SendNotification", {
-               Title = "Script",
-               Text = "[Warning] New Enemy Spawned! Applied hitboxes.",
+               Title = "FrontLine ESP",
+               Text = "[Warning] New Enemy Spawned!",
                Icon = "",
                Duration = 3
            })
@@ -211,15 +140,13 @@ local function handleDescendantAdded(descendant)
    end
 end
  
--- Connect the handleDescendantAdded function to the DescendantAdded event of the workspace
+-- Connect the handleDescendantAdded function
 task.spawn(function()
    game.Workspace.DescendantAdded:Connect(handleDescendantAdded)
 end)
  
--- Store the time when the code finishes executing
+-- Calculate loading time
 local finish = os.clock()
- 
--- Calculate how long the code took to run and determine a rating for the loading speed
 local time = finish - start
 local rating
 if time < 3 then
@@ -230,16 +157,15 @@ else
    rating = "slow"
 end
  
--- Send a notification showing how long the code took to run and its rating
 game.StarterGui:SetCore("SendNotification", {
-   Title = "Script",
-   Text = string.format("Script loaded in %.2f seconds (%s loading)", time, rating),
+   Title = "FrontLine ESP",
+   Text = string.format("Loaded in %.2f seconds (%s)", time, rating),
    Icon = "",
-   Duration = 5
+   Duration = 4
 })
 
 -- ============================================
--- MENU UI CUSTOMIZADO
+-- MENU UI
 -- ============================================
 
 -- Função para atualizar as configurações em tempo real
@@ -252,7 +178,6 @@ local function updateESPSettings()
     esp.Thickness = config.thickness
     esp:Toggle(config.espEnabled)
     
-    -- Atualizar variáveis globais
     size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
     trans = config.transparency
     notifications = config.notifications
@@ -285,7 +210,7 @@ MainFrame.Active = true
 MainFrame.Draggable = false
 MainFrame.Visible = false
 
--- Arredondar cantos do menu
+-- Arredondar cantos
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 8)
 MainCorner.Parent = MainFrame
@@ -327,7 +252,6 @@ CloseButton.Text = "×"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.TextSize = 16
 
--- Arredondar botão fechar
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
@@ -336,7 +260,7 @@ CloseButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
 end)
 
--- ScrollingFrame para conteúdo
+-- ScrollingFrame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Name = "ScrollFrame"
 ScrollFrame.Parent = MainFrame
@@ -348,7 +272,7 @@ ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 900)
 ScrollFrame.ScrollBarThickness = 4
 ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 150, 255)
 
--- Layout para organizar elementos
+-- Layout
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = ScrollFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -684,7 +608,7 @@ createButton("Apply to All Enemies", function()
     end
     
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Script",
+        Title = "FrontLine ESP",
         Text = "Settings applied to all enemies!",
         Icon = "",
         Duration = 3
@@ -694,7 +618,7 @@ order = order + 1
 
 -- Notificação de menu carregado
 game.StarterGui:SetCore("SendNotification", {
-    Title = "Script",
+    Title = "FrontLine ESP",
     Text = "INSERT: Toggle Menu | END: Remove Cheat",
     Icon = "",
     Duration = 6
@@ -717,7 +641,7 @@ local function removeCheat()
     
     -- Notificação de remoção
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Script",
+        Title = "FrontLine ESP",
         Text = "Cheat removido com sucesso!",
         Icon = "",
         Duration = 3

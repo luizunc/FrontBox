@@ -12,6 +12,7 @@ local ESP = {
     AttachShift = 1,
     TeamMates = true,
     Players = true,
+    Skeleton = true,
     
     Objects = setmetatable({}, {__mode="kv"}),
     Overrides = {}
@@ -254,6 +255,74 @@ function boxBase:Update()
         end
     else
         self.Components.Tracer.Visible = false
+    end
+    
+    -- Skeleton ESP
+    if ESP.Skeleton and self.Object:IsA("Model") then
+        local humanoid = self.Object:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid.Health > 0 then
+            local skeletonParts = {
+                {"Head", "UpperTorso"},
+                {"UpperTorso", "LowerTorso"},
+                {"UpperTorso", "LeftUpperArm"},
+                {"LeftUpperArm", "LeftLowerArm"},
+                {"LeftLowerArm", "LeftHand"},
+                {"UpperTorso", "RightUpperArm"},
+                {"RightUpperArm", "RightLowerArm"},
+                {"RightLowerArm", "RightHand"},
+                {"LowerTorso", "LeftUpperLeg"},
+                {"LeftUpperLeg", "LeftLowerLeg"},
+                {"LeftLowerLeg", "LeftFoot"},
+                {"LowerTorso", "RightUpperLeg"},
+                {"RightUpperLeg", "RightLowerLeg"},
+                {"RightLowerLeg", "RightFoot"}
+            }
+            
+            for i, connection in ipairs(skeletonParts) do
+                local part1 = self.Object:FindFirstChild(connection[1])
+                local part2 = self.Object:FindFirstChild(connection[2])
+                
+                if part1 and part2 then
+                    local componentName = "Skeleton_" .. i
+                    if not self.Components[componentName] then
+                        self.Components[componentName] = Draw("Line", {
+                            Thickness = ESP.Thickness,
+                            Color = color,
+                            Transparency = 1,
+                            Visible = false
+                        })
+                    end
+                    
+                    local pos1, vis1 = WorldToViewportPoint(cam, part1.Position)
+                    local pos2, vis2 = WorldToViewportPoint(cam, part2.Position)
+                    
+                    if vis1 and vis2 then
+                        self.Components[componentName].Visible = true
+                        self.Components[componentName].From = Vector2.new(pos1.X, pos1.Y)
+                        self.Components[componentName].To = Vector2.new(pos2.X, pos2.Y)
+                        self.Components[componentName].Color = color
+                    else
+                        self.Components[componentName].Visible = false
+                    end
+                end
+            end
+        else
+            -- Esconder skeleton se não houver humanoid ou estiver morto
+            for i = 1, 14 do
+                local componentName = "Skeleton_" .. i
+                if self.Components[componentName] then
+                    self.Components[componentName].Visible = false
+                end
+            end
+        end
+    else
+        -- Esconder skeleton se desabilitado
+        for i = 1, 14 do
+            local componentName = "Skeleton_" .. i
+            if self.Components[componentName] then
+                self.Components[componentName].Visible = false
+            end
+        end
     end
 end
 
