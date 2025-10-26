@@ -1,11 +1,23 @@
+-- Aimbot Otimizado - FrontBox
 local Aimbot = {}
 
+-- Serviços
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+-- Variáveis Locais
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
+local FOVCircle
+local CurrentTarget
+local AimKeyPressed = false
+local enemyCache = {}
+local lastCacheUpdate = 0
+local CACHE_REFRESH_RATE = 0.5
 
+-- Configurações
 Aimbot.Settings = {
     Enabled = false,
     TeamCheck = true,
@@ -21,168 +33,166 @@ Aimbot.Settings = {
     IgnoreDead = true
 }
 
-local FOVCircle
-local CurrentTarget
-local AimKeyPressed = false
-
+-- Funções de FOV
 local function CreateFOVCircle()
-    FOVCircle = Drawing.new("Circle")
-    FOVCircle.Thickness = 2
-    FOVCircle.NumSides = 50
-    FOVCircle.Radius = Aimbot.Settings.FOV
-    FOVCircle.Filled = false
-    FOVCircle.Visible = Aimbot.Settings.ShowFOV
-    FOVCircle.Color = Aimbot.Settings.FOVColor
-    FOVCircle.Transparency = 1
-    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local success, circle = pcall(function()
+        local c = Drawing.new("Circle")
+        c.Thickness = 2
+        c.NumSides = 50
+        c.Radius = Aimbot.Settings.FOV
+        c.Filled = false
+        c.Visible = Aimbot.Settings.ShowFOV
+        c.Color = Aimbot.Settings.FOVColor
+        c.Transparency = 1
+        c.Position = Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y * 0.5)
+        return c
+    end)
+    if success then
+        FOVCircle = circle
+    end
 end
 
 local function UpdateFOVCircle()
-    if FOVCircle then
-        FOVCircle.Visible = Aimbot.Settings.ShowFOV and Aimbot.Settings.Enabled
-        FOVCircle.Radius = Aimbot.Settings.FOV
-        FOVCircle.Color = Aimbot.Settings.FOVColor
-        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    end
+    if not FOVCircle then return end
+    
+    FOVCircle.Visible = Aimbot.Settings.ShowFOV and Aimbot.Settings.Enabled
+    FOVCircle.Radius = Aimbot.Settings.FOV
+    FOVCircle.Color = Aimbot.Settings.FOVColor
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y * 0.5)
 end
+
+-- Funções de Validação
+local raycastParams = RaycastParams.new()
+raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+raycastParams.IgnoreWater = true
 
 local function IsVisible(targetPart)
     if not Aimbot.Settings.VisibilityCheck then return true end
+    if not targetPart then return false end
     
     local origin = Camera.CFrame.Position
-    local direction = (targetPart.Position - origin).Unit * (targetPart.Position - origin).Magnitude
+    local targetPos = targetPart.Position
+    local direction = targetPos - origin
     
-    local raycastParams = RaycastParams.new()
     raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, targetPart.Parent}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    raycastParams.IgnoreWater = true
     
     local rayResult = workspace:Raycast(origin, direction, raycastParams)
     
-    if rayResult then
-        local hitParent = rayResult.Instance.Parent
-        return hitParent == targetPart.Parent or hitParent:IsDescendantOf(targetPart.Parent)
-    end
+    if not rayResult then return true end
     
-    return true
+    local hitParent = rayResult.Instance.Parent
+    return hitParent == targetPart.Parent or hitParent:IsDescendantOf(targetPart.Parent)
 end
 
 local function IsTeamMate(player)
     if not Aimbot.Settings.TeamCheck then return false end
+    if not LocalPlayer.Team then return false end
     return player.Team == LocalPlayer.Team
 end
 
 local function IsAlive(character)
-    if not character then return false end
+    if not character or not character.Parent then return false end
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     return humanoid and humanoid.Health > 0
 end
 
+local function GetTargetPart(character)
+    return character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Funções de Detecção de Alvo
 local function GetClosestPlayerToCursor()
     local closestPlayer = nil
     local shortestDistance = Aimbot.Settings.FOV
+    local mousePos = UserInputService:GetMouseLocation()
     
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local character = player.Character
-            if character then
-                if Aimbot.Settings.TeamCheck and IsTeamMate(player) then
-                    continue
-                end
-                
-                if character:FindFirstChild("friendly_marker") then
-                    continue
-                end
-                
-                if Aimbot.Settings.IgnoreDead and not IsAlive(character) then
-                    continue
-                end
-                
-                local targetPart = character:FindFirstChild("Head")
-                if not targetPart then
-                    targetPart = character:FindFirstChild("HumanoidRootPart")
-                end
-                
-                if targetPart then
-                    if IsVisible(targetPart) then
-                        local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-                        
-                        if onScreen then
-                            local mousePos = UserInputService:GetMouseLocation()
-                            local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
-                            
-                            if distance < shortestDistance then
-                                closestPlayer = player
-                                shortestDistance = distance
-                            end
-                        end
-                    end
-                end
-            end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        
+        local character = player.Character
+        if not character then continue end
+        
+        if Aimbot.Settings.TeamCheck and IsTeamMate(player) then continue end
+        if character:FindFirstChild("friendly_marker") then continue end
+        if Aimbot.Settings.IgnoreDead and not IsAlive(character) then continue end
+        
+        local targetPart = GetTargetPart(character)
+        if not targetPart then continue end
+        if not IsVisible(targetPart) then continue end
+        
+        local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+        if not onScreen then continue end
+        
+        local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
+        if distance < shortestDistance then
+            closestPlayer = player
+            shortestDistance = distance
         end
     end
     
     return closestPlayer
 end
 
+local function UpdateEnemyCache()
+    local currentTime = tick()
+    if currentTime - lastCacheUpdate < CACHE_REFRESH_RATE then return end
+    
+    lastCacheUpdate = currentTime
+    table.clear(enemyCache)
+    
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "soldier_model" and obj:IsA("Model") then
+            if not obj:FindFirstChild("friendly_marker") then
+                table.insert(enemyCache, obj)
+            end
+        end
+    end
+end
+
 local function GetClosestEnemyModel()
+    UpdateEnemyCache()
+    
     local closestModel = nil
     local shortestDistance = Aimbot.Settings.FOV
+    local mousePos = UserInputService:GetMouseLocation()
     
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name == "soldier_model" and obj:IsA("Model") then
-            if obj:FindFirstChild("friendly_marker") then
-                continue
-            end
-            
-            local humanoid = obj:FindFirstChildOfClass("Humanoid")
-            if Aimbot.Settings.IgnoreDead and (not humanoid or humanoid.Health <= 0) then
-                continue
-            end
-            
-            local targetPart = obj:FindFirstChild("Head")
-            if not targetPart then
-                targetPart = obj:FindFirstChild("HumanoidRootPart")
-            end
-            
-            if targetPart then
-                if IsVisible(targetPart) then
-                    local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-                    
-                    if onScreen then
-                        local mousePos = UserInputService:GetMouseLocation()
-                        local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
-                        
-                        if distance < shortestDistance then
-                            closestModel = obj
-                            shortestDistance = distance
-                        end
-                    end
-                end
-            end
+    for _, obj in ipairs(enemyCache) do
+        if not obj or not obj.Parent then continue end
+        
+        local humanoid = obj:FindFirstChildOfClass("Humanoid")
+        if Aimbot.Settings.IgnoreDead and (not humanoid or humanoid.Health <= 0) then continue end
+        
+        local targetPart = GetTargetPart(obj)
+        if not targetPart then continue end
+        if not IsVisible(targetPart) then continue end
+        
+        local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+        if not onScreen then continue end
+        
+        local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
+        if distance < shortestDistance then
+            closestModel = obj
+            shortestDistance = distance
         end
     end
     
     return closestModel
 end
 
+-- Funções de Mira
 local function GetTargetPosition(target)
     local character = target.Character or target
+    if not character or not character.Parent then return nil end
     
-    local targetPart = character:FindFirstChild("Head")
-    if not targetPart then
-        targetPart = character:FindFirstChild("HumanoidRootPart")
-    end
-    
+    local targetPart = GetTargetPart(character)
     if not targetPart then return nil end
     
     local position = targetPart.Position
     
     if Aimbot.Settings.PredictionEnabled then
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        if humanoidRootPart then
-            local velocity = humanoidRootPart.AssemblyVelocity
-            position = position + (velocity * Aimbot.Settings.PredictionAmount)
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp and hrp:IsA("BasePart") then
+            position = position + (hrp.AssemblyVelocity * Aimbot.Settings.PredictionAmount)
         end
     end
     
@@ -195,20 +205,19 @@ local function AimAt(target)
     local targetPosition = GetTargetPosition(target)
     if not targetPosition then return end
     
-    local cameraPosition = Camera.CFrame.Position
-    local targetCFrame = CFrame.new(cameraPosition, targetPosition)
+    local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPosition)
     
-    if Aimbot.Settings.Smoothness > 0 then
-        Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, Aimbot.Settings.Smoothness)
-    else
-        Camera.CFrame = targetCFrame
-    end
+    Camera.CFrame = Aimbot.Settings.Smoothness > 0 
+        and Camera.CFrame:Lerp(targetCFrame, Aimbot.Settings.Smoothness) 
+        or targetCFrame
 end
 
+-- Métodos Públicos
 function Aimbot:Toggle(state)
     self.Settings.Enabled = state
     if not state then
         CurrentTarget = nil
+        table.clear(enemyCache)
     end
 end
 
@@ -218,6 +227,11 @@ function Aimbot:UpdateSettings(newSettings)
             self.Settings[key] = value
         end
     end
+end
+
+function Aimbot:ClearCache()
+    table.clear(enemyCache)
+    lastCacheUpdate = 0
 end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -235,38 +249,41 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- Loop Principal
 RunService.RenderStepped:Connect(function()
     UpdateFOVCircle()
     
-    if Aimbot.Settings.Enabled and AimKeyPressed then
-        if not CurrentTarget or not CurrentTarget.Parent then
-            local playerTarget = GetClosestPlayerToCursor()
-            if playerTarget then
-                CurrentTarget = playerTarget
-            else
-                local modelTarget = GetClosestEnemyModel()
-                if modelTarget then
-                    CurrentTarget = modelTarget
-                end
-            end
-        end
-        
-        if CurrentTarget then
-            local character = CurrentTarget.Character or CurrentTarget
-            if character and character.Parent then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    AimAt(CurrentTarget)
-                else
-                    CurrentTarget = nil
-                end
-            else
-                CurrentTarget = nil
-            end
-        end
+    if not (Aimbot.Settings.Enabled and AimKeyPressed) then return end
+    
+    if not CurrentTarget or not CurrentTarget.Parent then
+        CurrentTarget = GetClosestPlayerToCursor() or GetClosestEnemyModel()
     end
+    
+    if not CurrentTarget then return end
+    
+    local character = CurrentTarget.Character or CurrentTarget
+    if not character or not character.Parent then
+        CurrentTarget = nil
+        return
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then
+        CurrentTarget = nil
+        return
+    end
+    
+    AimAt(CurrentTarget)
 end)
 
+-- Inicialização
 CreateFOVCircle()
+
+-- Limpar cache quando workspace muda
+workspace.DescendantRemoving:Connect(function(descendant)
+    if descendant.Name == "soldier_model" then
+        Aimbot:ClearCache()
+    end
+end)
 
 return Aimbot

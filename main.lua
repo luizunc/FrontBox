@@ -1,13 +1,23 @@
--- FrontBox - Sistema de ESP e Hitbox
+-- FrontBox - Sistema de ESP e Hitbox Otimizado
 -- storager.kkr
-local menuOpen = true
+
+-- Serviços
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
+-- Variáveis Globais
+local LocalPlayer = Players.LocalPlayer
+local start = os.clock()
+local processedEnemies = {}
+local hitboxCache = {}
+
+-- Configurações
 local config = {
-    -- Configurações de Hitbox
     hitboxSize = {x = 10, y = 10, z = 10},
     transparency = 1,
     notifications = false,
-    
-    -- Configurações de ESP
     espEnabled = false,
     boxes = false,
     names = false,
@@ -16,147 +26,75 @@ local config = {
     players = false,
     skeleton = false,
     teamCheck = true,
-    
-    -- Configurações de Cor
     espColor = {r = 255, g = 255, b = 255},
     thickness = 2,
-    
-    -- Performance
-    autoRemove = true
+    autoRemove = true,
+    hitboxRadius = 5
 }
 
-local size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
-local trans = config.transparency
-local notifications = config.notifications
-local start = os.clock()
+-- Funções Auxiliares
+local function sendNotification(title, text, duration)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Icon = "",
+            Duration = duration or 3
+        })
+    end)
+end
 
-game.StarterGui:SetCore("SendNotification", {
-   Title = "FrontBox",
-   Text = "Carregando...",
-   Icon = "",
-   Duration = 5
-})
+local function isValidEnemy(model)
+    if not model or not model:IsA("Model") then return false end
+    if model.Name ~= "soldier_model" then return false end
+    if model:FindFirstChild("friendly_marker") then return false end
+    
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.Health <= 0 then return false end
+    
+    return true
+end
+
+-- Sistema de Hitbox
+local function applyHitboxToEnemy(enemy)
+    if not isValidEnemy(enemy) then return end
+    if processedEnemies[enemy] then return end
+    
+    local hrp = enemy:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    processedEnemies[enemy] = true
+    
+    local pos = hrp.Position
+    local size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
+    
+    for _, bp in pairs(workspace:GetChildren()) do
+        if bp:IsA("BasePart") then
+            local distance = (bp.Position - pos).Magnitude
+            if distance <= config.hitboxRadius then
+                bp.Transparency = config.transparency
+                bp.Size = size
+            end
+        end
+    end
+    
+    if config.notifications then
+        sendNotification("FrontBox", "Hitbox aplicado ao inimigo", 2)
+    end
+end
+
+local function removeEnemyFromCache(enemy)
+    processedEnemies[enemy] = nil
+    hitboxCache[enemy] = nil
+end
+
+-- Inicialização do ESP
+sendNotification("FrontBox", "Carregando...", 5)
 
 local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/FrontBox/main/esp.lua"))()
 esp:Toggle(true)
 
-
-esp.Boxes = config.boxes
-esp.Names = config.names
-esp.Distance = config.distance
-esp.Tracers = config.tracers
-esp.Players = config.players
-esp.Skeleton = config.skeleton
-esp.Thickness = config.thickness
-
-esp:AddObjectListener(workspace, {
-   Name = "soldier_model",
-   Type = "Model",
-   ColorDynamic = function()
-       return Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
-   end,
- 
-   PrimaryPart = function(obj)
-       local root
-       repeat
-           root = obj:FindFirstChild("HumanoidRootPart")
-           task.wait()
-       until root
-       return root
-   end,
-    
-   Validator = function(obj)
-       task.wait(1)
-       if obj:FindFirstChild("friendly_marker") then
-           return false
-       end
-       local humanoid = obj:FindFirstChildOfClass("Humanoid")
-       if humanoid and humanoid.Health <= 0 then
-           return false
-       end
-       return true
-   end,
- 
-   CustomName = "?",
- 
-   IsEnabled = "enemy"
-})
- 
-esp.enemy = true
- 
-task.wait(1)
- 
-for _, v in pairs(workspace:GetDescendants()) do
-   if v.Name == "soldier_model" and v:IsA("Model") and not v:FindFirstChild("friendly_marker") then
-       local hrp = v:FindFirstChild("HumanoidRootPart")
-       if hrp then
-           hrp.Transparency = trans
-           hrp.Size = size
-           hrp.CanCollide = false
-       end
-       
-       for _, part in pairs(v:GetDescendants()) do
-           if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-               part.Transparency = 1
-               part.CanCollide = false
-           end
-       end
-   end
-end
- 
-local function handleDescendantAdded(descendant)
-   task.wait(1)
- 
-   if descendant.Name == "soldier_model" and descendant:IsA("Model") and not descendant:FindFirstChild("friendly_marker") then
-       if notifications then
-           game.StarterGui:SetCore("SendNotification", {
-               Title = "FrontBox",
-               Text = "[ALERTA] Novo inimigo detectado",
-               Icon = "",
-               Duration = 3
-           })
-       end
- 
-       local hrp = descendant:FindFirstChild("HumanoidRootPart")
-       if hrp then
-           hrp.Transparency = trans
-           hrp.Size = size
-           hrp.CanCollide = false
-       end
-       
-       for _, part in pairs(descendant:GetDescendants()) do
-           if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-               part.Transparency = 1
-               part.CanCollide = false
-           end
-       end
-   end
-end
- 
-task.spawn(function()
-   game.Workspace.DescendantAdded:Connect(handleDescendantAdded)
-end)
- 
-local finish = os.clock()
- 
-local time = finish - start
-local rating
-if time < 3 then
-   rating = "fast"
-elseif time < 5 then
-   rating = "acceptable"
-else
-   rating = "slow"
-end
- 
-game.StarterGui:SetCore("SendNotification", {
-   Title = "FrontBox",
-   Text = string.format("Sistema ativo [%.2fs | %s]", time, rating),
-   Icon = "",
-   Duration = 5
-})
-
-local function updateESPSettings()
+local function updateESPConfig()
     esp.Boxes = config.boxes
     esp.Names = config.names
     esp.Distance = config.distance
@@ -164,11 +102,72 @@ local function updateESPSettings()
     esp.Players = config.players
     esp.Skeleton = config.skeleton
     esp.Thickness = config.thickness
-    esp:Toggle(config.espEnabled)
+end
+
+updateESPConfig()
+
+-- Configuração do ESP
+esp:AddObjectListener(workspace, {
+    Name = "soldier_model",
+    Type = "Model",
+    ColorDynamic = function()
+        return Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
+    end,
+    PrimaryPart = function(obj)
+        return obj:WaitForChild("HumanoidRootPart", 5)
+    end,
+    Validator = function(obj)
+        return isValidEnemy(obj)
+    end,
+    CustomName = "INIMIGO",
+    IsEnabled = "enemy"
+})
+
+esp.enemy = true
+
+-- Aplicar Hitbox em Inimigos Existentes
+task.wait(1)
+
+task.spawn(function()
+    for _, enemy in pairs(workspace:GetDescendants()) do
+        if isValidEnemy(enemy) then
+            applyHitboxToEnemy(enemy)
+        end
+    end
+end)
+
+-- Monitorar Novos Inimigos
+local debounce = {}
+
+workspace.DescendantAdded:Connect(function(descendant)
+    if debounce[descendant] then return end
+    debounce[descendant] = true
     
-    size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
-    trans = config.transparency
-    notifications = config.notifications
+    task.delay(1, function()
+        if isValidEnemy(descendant) then
+            applyHitboxToEnemy(descendant)
+            
+            descendant.AncestryChanged:Connect(function(_, parent)
+                if not parent then
+                    removeEnemyFromCache(descendant)
+                end
+            end)
+        end
+        debounce[descendant] = nil
+    end)
+end)
+ 
+-- Finalização
+local finish = os.clock()
+local loadTime = finish - start
+local rating = loadTime < 3 and "rápido" or loadTime < 5 and "aceitável" or "lento"
+
+sendNotification("FrontBox", string.format("Sistema ativo [%.2fs | %s]", loadTime, rating), 5)
+
+-- Sistema de Interface (GUI)
+local function updateSettings()
+    updateESPConfig()
+    esp:Toggle(config.espEnabled)
 end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -449,169 +448,148 @@ end
 
 local order = 0
 
-createSeparator("ESP SETTINGS", order)
+createSeparator("CONFIGURAÇÕES ESP", order)
 order = order + 1
 
-createCheckbox("Enable ESP", config.espEnabled, function(value)
+createCheckbox("Ativar ESP", config.espEnabled, function(value)
     config.espEnabled = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Show Boxes", config.boxes, function(value)
+createCheckbox("Mostrar Caixas", config.boxes, function(value)
     config.boxes = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Show Names", config.names, function(value)
+createCheckbox("Mostrar Nomes", config.names, function(value)
     config.names = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Show Distance", config.distance, function(value)
+createCheckbox("Mostrar Distância", config.distance, function(value)
     config.distance = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Show Tracers", config.tracers, function(value)
+createCheckbox("Mostrar Linhas", config.tracers, function(value)
     config.tracers = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Show Players", config.players, function(value)
+createCheckbox("Mostrar Jogadores", config.players, function(value)
     config.players = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Show Skeleton", config.skeleton, function(value)
+createCheckbox("Mostrar Esqueleto", config.skeleton, function(value)
     config.skeleton = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createCheckbox("Team Check", config.teamCheck, function(value)
+createCheckbox("Verificar Time", config.teamCheck, function(value)
     config.teamCheck = value
-    updateESPSettings()
+    updateSettings()
 end, order)
 order = order + 1
 
-createSlider("Thickness", config.thickness, 1, 5, function(value)
+createSlider("Espessura", config.thickness, 1, 5, function(value)
     config.thickness = value
-    updateESPSettings()
+    updateSettings()
 end, order, true)
 order = order + 1
 
-createSeparator("COLOR SETTINGS", order)
+createSeparator("CORES", order)
 order = order + 1
 
-createSlider("Red", config.espColor.r, 0, 255, function(value)
+createSlider("Vermelho", config.espColor.r, 0, 255, function(value)
     config.espColor.r = value
 end, order, true)
 order = order + 1
 
-createSlider("Green", config.espColor.g, 0, 255, function(value)
+createSlider("Verde", config.espColor.g, 0, 255, function(value)
     config.espColor.g = value
 end, order, true)
 order = order + 1
 
-createSlider("Blue", config.espColor.b, 0, 255, function(value)
+createSlider("Azul", config.espColor.b, 0, 255, function(value)
     config.espColor.b = value
 end, order, true)
 order = order + 1
 
-createSeparator("HITBOX SETTINGS", order)
+createSeparator("HITBOX", order)
 order = order + 1
 
-createSlider("Hitbox X", config.hitboxSize.x, 1, 20, function(value)
+createSlider("Tamanho X", config.hitboxSize.x, 1, 20, function(value)
     config.hitboxSize.x = value
-    updateESPSettings()
 end, order, true)
 order = order + 1
 
-createSlider("Hitbox Y", config.hitboxSize.y, 1, 20, function(value)
+createSlider("Tamanho Y", config.hitboxSize.y, 1, 20, function(value)
     config.hitboxSize.y = value
-    updateESPSettings()
 end, order, true)
 order = order + 1
 
-createSlider("Hitbox Z", config.hitboxSize.z, 1, 20, function(value)
+createSlider("Tamanho Z", config.hitboxSize.z, 1, 20, function(value)
     config.hitboxSize.z = value
-    updateESPSettings()
 end, order, true)
 order = order + 1
 
-createSlider("Transparency", config.transparency, 0, 1, function(value)
+createSlider("Transparência", config.transparency, 0, 1, function(value)
     config.transparency = value
-    updateESPSettings()
 end, order, false)
 order = order + 1
 
-createSeparator("NOTIFICATIONS", order)
+createSeparator("NOTIFICAÇÕES", order)
 order = order + 1
 
-createCheckbox("Enable Notifications", config.notifications, function(value)
+createCheckbox("Ativar Notificações", config.notifications, function(value)
     config.notifications = value
-    updateESPSettings()
 end, order)
 order = order + 1
 
-createSeparator("PERFORMANCE", order)
+createSeparator("DESEMPENHO", order)
 order = order + 1
 
-createCheckbox("Auto Remove", config.autoRemove, function(value)
+createCheckbox("Remoção Automática", config.autoRemove, function(value)
     config.autoRemove = value
     esp.AutoRemove = value
 end, order)
 order = order + 1
 
-createSeparator("ACTIONS", order)
+createSeparator("AÇÕES", order)
 order = order + 1
 
-createButton("Apply to All Enemies", function()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == "soldier_model" and v:IsA("Model") and not v:FindFirstChild("friendly_marker") then
-            local hrp = v:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                hrp.Transparency = trans
-                hrp.Size = size
-                hrp.CanCollide = false
-            end
-            
-                 for _, part in pairs(v:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                    part.Transparency = 1
-                    part.CanCollide = false
-                end
+createButton("Aplicar em Todos", function()
+    local count = 0
+    processedEnemies = {}
+    
+    task.spawn(function()
+        for _, enemy in pairs(workspace:GetDescendants()) do
+            if isValidEnemy(enemy) then
+                applyHitboxToEnemy(enemy)
+                count = count + 1
             end
         end
-    end
-    
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "FrontBox",
-        Text = "Aplicado em todos os inimigos!",
-        Icon = "",
-        Duration = 3
-    })
+        sendNotification("FrontBox", string.format("Aplicado em %d inimigos!", count), 3)
+    end)
 end, order)
 order = order + 1
 
-game.StarterGui:SetCore("SendNotification", {
-    Title = "FrontBox",
-    Text = "[INSERT] Menu | [END] Desativar",
-    Icon = "",
-    Duration = 6
-})
+sendNotification("FrontBox", "[INSERT] Abrir Menu | [END] Desativar", 6)
 
+-- Função de Remoção
 local function removeCheat()
     esp:Toggle(false)
-    for i,v in pairs(esp.Objects) do
+    for _, v in pairs(esp.Objects) do
         if v.Remove then
-            v:Remove()
+            pcall(function() v:Remove() end)
         end
     end
     
@@ -619,21 +597,30 @@ local function removeCheat()
         ScreenGui:Destroy()
     end
     
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "FrontBox",
-        Text = "Sistema desativado",
-        Icon = "",
-        Duration = 3
-    })
+    processedEnemies = {}
+    hitboxCache = {}
+    
+    sendNotification("FrontBox", "Sistema desativado com sucesso", 3)
 end
 
-local UserInputService = game:GetService("UserInputService")
+-- Controles de Teclado
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.Insert then
-            MainFrame.Visible = not MainFrame.Visible
-        elseif input.KeyCode == Enum.KeyCode.End then
-            removeCheat()
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    elseif input.KeyCode == Enum.KeyCode.End then
+        removeCheat()
+    end
+end)
+
+-- Limpeza de Memória
+task.spawn(function()
+    while task.wait(30) do
+        for enemy, _ in pairs(processedEnemies) do
+            if not enemy or not enemy.Parent then
+                removeEnemyFromCache(enemy)
+            end
         end
     end
 end)
