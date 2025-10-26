@@ -203,7 +203,7 @@ MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
 MainFrame.Size = UDim2.new(0, 700, 0, 450)
 MainFrame.Active = true
-MainFrame.Draggable = false
+MainFrame.Draggable = true
 MainFrame.Visible = false
 
 local MainCorner = Instance.new("UICorner")
@@ -221,48 +221,36 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleBar
 
-local LogoFrame = Instance.new("Frame")
-LogoFrame.Name = "LogoFrame"
-LogoFrame.Parent = TitleBar
-LogoFrame.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-LogoFrame.BorderSizePixel = 0
-LogoFrame.Position = UDim2.new(0, 12, 0.5, -15)
-LogoFrame.Size = UDim2.new(0, 30, 0, 30)
-
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.CornerRadius = UDim.new(0, 8)
-LogoCorner.Parent = LogoFrame
-
-local LogoText = Instance.new("TextLabel")
-LogoText.Parent = LogoFrame
-LogoText.BackgroundTransparency = 1
-LogoText.Size = UDim2.new(1, 0, 1, 0)
-LogoText.Font = Enum.Font.GothamBold
-LogoText.Text = "FB"
-LogoText.TextColor3 = Color3.fromRGB(10, 12, 18)
-LogoText.TextSize = 14
+local LogoImage = Instance.new("ImageLabel")
+LogoImage.Name = "LogoImage"
+LogoImage.Parent = TitleBar
+LogoImage.BackgroundTransparency = 1
+LogoImage.Position = UDim2.new(0, 12, 0.5, -15)
+LogoImage.Size = UDim2.new(0, 30, 0, 30)
+LogoImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+LogoImage.ImageColor3 = Color3.fromRGB(0, 200, 255)
 
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Parent = TitleBar
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 50, 0, 0)
-Title.Size = UDim2.new(1, -120, 1, 0)
+Title.Position = UDim2.new(0, 50, 0, 5)
+Title.Size = UDim2.new(1, -120, 0, 20)
 Title.Font = Enum.Font.GothamBold
 Title.Text = "FRONTBOX"
 Title.TextColor3 = Color3.fromRGB(0, 200, 255)
-Title.TextSize = 18
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
 local Subtitle = Instance.new("TextLabel")
 Subtitle.Parent = TitleBar
 Subtitle.BackgroundTransparency = 1
-Subtitle.Position = UDim2.new(0, 50, 0, 20)
-Subtitle.Size = UDim2.new(1, -120, 0, 20)
+Subtitle.Position = UDim2.new(0, 50, 0, 25)
+Subtitle.Size = UDim2.new(1, -120, 0, 15)
 Subtitle.Font = Enum.Font.Gotham
-Subtitle.Text = "v2.0 | Advanced Combat System"
+Subtitle.Text = "v2.0  •  Advanced Combat System"
 Subtitle.TextColor3 = Color3.fromRGB(100, 150, 180)
-Subtitle.TextSize = 11
+Subtitle.TextSize = 10
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 
 local CloseButton = Instance.new("TextButton")
@@ -319,7 +307,8 @@ ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
 ScrollFrame.Position = UDim2.new(0, 10, 0, 10)
 ScrollFrame.Size = UDim2.new(1, -20, 1, -20)
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 800)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ScrollFrame.ScrollBarThickness = 4
 ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 255)
 
@@ -689,7 +678,7 @@ function loadTabContent(tabName)
         end, order)
         order = order + 1
         
-    elseif tabName == "Aimbot" then
+    elseif tabName == "AIMBOT" then
         createSection("Aimbot Settings", order)
         order = order + 1
         
@@ -738,7 +727,7 @@ function loadTabContent(tabName)
         end, order, false)
         order = order + 1
         
-    elseif tabName == "Visuals" then
+    elseif tabName == "VISUALS" then
         createSection("Visual Settings", order)
         order = order + 1
         
@@ -766,7 +755,7 @@ function loadTabContent(tabName)
         end, order, true)
         order = order + 1
         
-    elseif tabName == "Hitbox" then
+    elseif tabName == "HITBOX" then
         createSection("Hitbox Size (Max: 20)", order)
         order = order + 1
         
@@ -801,15 +790,15 @@ function loadTabContent(tabName)
             end
             
             game.StarterGui:SetCore("SendNotification", {
-                Title = "FrontLine ESP",
-                Text = string.format("Applied to %d enemies!", count),
+                Title = "FrontBox",
+                Text = string.format("Aplicado em %d inimigos!", count),
                 Icon = "",
                 Duration = 3
             })
         end, order)
         order = order + 1
         
-    elseif tabName == "Settings" then
+    elseif tabName == "SETTINGS" then
         createSection("General Settings", order)
         order = order + 1
         

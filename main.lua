@@ -292,7 +292,7 @@ MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
 MainFrame.Size = UDim2.new(0, 350, 0, 500)
 MainFrame.Active = true
-MainFrame.Draggable = false
+MainFrame.Draggable = true
 MainFrame.Visible = false
 
 -- Arredondar cantos do menu
