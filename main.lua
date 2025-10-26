@@ -59,27 +59,37 @@
 
 
 
+-- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
+--/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
+--\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
+ --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
+--|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
+
+
+
+
+
 -- Configurações do menu ImGui
 -- ImGui menu settings
 local menuOpen = true
 local config = {
     -- Hitbox settings
     hitboxSize = {x = 10, y = 10, z = 10},
-    transparency = 0.7,
+    transparency = 1,
     notifications = false,
     
     -- ESP settings
-    espEnabled = true,
-    boxes = true,
-    names = true,
-    distance = true,
+    espEnabled = false,
+    boxes = false,
+    names = false,
+    distance = false,
     tracers = false,
     players = false,
-    skeleton = true,
+    skeleton = false,
     teamCheck = true,
     
     -- Color settings
-    espColor = {r = 255, g = 0, b = 4},
+    espColor = {r = 255, g = 255, b = 255},
     thickness = 2,
     
     -- Performance
@@ -95,17 +105,14 @@ local notifications = config.notifications
 -- Store the time when the code starts executing
 local start = os.clock()
 
--- stuurt een notificatie dat het script aan het laden is
--- Send a notification saying that the script is loading
 game.StarterGui:SetCore("SendNotification", {
-   Title = "Script",
-   Text = "Loading...",
+   Title = "FrontBox",
+   Text = "Carregando...",
    Icon = "",
    Duration = 5
 })
--- zoek de esp library op github executes het  
--- Load the ESP library and turns it on
-local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/Script_FrontLine/refs/heads/main/esp-library.lua"))()
+
+local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/FrontBox/main/esp.lua"))()
 esp:Toggle(true)
 
 
@@ -194,8 +201,8 @@ local function handleDescendantAdded(descendant)
    if descendant.Name == "soldier_model" and descendant:IsA("Model") and not descendant:FindFirstChild("friendly_marker") then
        if notifications then
            game.StarterGui:SetCore("SendNotification", {
-               Title = "Script",
-               Text = "[Warning] New Enemy Spawned! Applied hitboxes.",
+               Title = "FrontBox",
+               Text = "[ALERTA] Novo inimigo detectado",
                Icon = "",
                Duration = 3
            })
@@ -234,10 +241,9 @@ else
    rating = "slow"
 end
  
--- Send a notification showing how long the code took to run and its rating
 game.StarterGui:SetCore("SendNotification", {
-   Title = "Script",
-   Text = string.format("Script loaded in %.2f seconds (%s loading)", time, rating),
+   Title = "FrontBox",
+   Text = string.format("Sistema ativo [%.2fs | %s]", time, rating),
    Icon = "",
    Duration = 5
 })
@@ -263,9 +269,8 @@ local function updateESPSettings()
     notifications = config.notifications
 end
 
--- Criar ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FrontLineESPMenu"
+ScreenGui.Name = "FrontBoxMenu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -314,7 +319,7 @@ Title.BackgroundTransparency = 1
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.Size = UDim2.new(1, -70, 1, 0)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "FrontLine ESP"
+Title.Text = "FRONTBOX"
 Title.TextColor3 = Color3.fromRGB(100, 150, 255)
 Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -701,18 +706,17 @@ createButton("Apply to All Enemies", function()
     end
     
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Script",
-        Text = "Settings applied to all enemies!",
+        Title = "FrontBox",
+        Text = "Aplicado em todos os inimigos!",
         Icon = "",
         Duration = 3
     })
 end, order)
 order = order + 1
 
--- Notificação de menu carregado
 game.StarterGui:SetCore("SendNotification", {
-    Title = "Script",
-    Text = "INSERT: Toggle Menu | END: Remove Cheat",
+    Title = "FrontBox",
+    Text = "[INSERT] Menu | [END] Desativar",
     Icon = "",
     Duration = 6
 })
@@ -732,10 +736,9 @@ local function removeCheat()
         ScreenGui:Destroy()
     end
     
-    -- Notificação de remoção
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Script",
-        Text = "Cheat removido com sucesso!",
+        Title = "FrontBox",
+        Text = "Sistema desativado",
         Icon = "",
         Duration = 3
     })

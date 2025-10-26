@@ -75,7 +75,7 @@ function ESP:Toggle(bool)
     self.Enabled = bool
     if not bool then
         for i,v in pairs(self.Objects) do
-            if v.Type == "Box" then --fov circle etc
+            if v.Type == "Box" then
                 if v.Temporary then
                     v:Remove()
                 else
@@ -105,7 +105,6 @@ function ESP:AddObjectListener(parent, options)
                         IsEnabled = options.IsEnabled,
                         RenderInNil = options.RenderInNil
                     })
-                    --TODO: add a better way of passing options
                     if options.OnAdded then
                         coroutine.wrap(options.OnAdded)(box)
                     end
