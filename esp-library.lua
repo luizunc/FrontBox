@@ -1,4 +1,3 @@
---Settings--
 local ESP = {
     Enabled = false,
     Boxes = true,
@@ -14,21 +13,18 @@ local ESP = {
     TeamMates = true,
     Players = true,
     Skeleton = true,
-    
+    VisibilityCheck = true,
     Objects = setmetatable({}, {__mode="kv"}),
     Overrides = {}
 }
 
---Declarations--
 local cam = workspace.CurrentCamera
 local plrs = game:GetService("Players")
 local plr = plrs.LocalPlayer
 local mouse = plr:GetMouse()
-
 local V3new = Vector3.new
 local WorldToViewportPoint = cam.WorldToViewportPoint
 
---Functions--
 local function Draw(obj, props)
 	local new = Drawing.new(obj)
 	
@@ -145,7 +141,6 @@ end
 
 function boxBase:Update()
     if not self.PrimaryPart then
-        --warn("not supposed to print", self.Object)
         return self:Remove()
     end
 
@@ -160,6 +155,31 @@ function boxBase:Update()
     if ESP.Overrides.UpdateAllow and not ESP.Overrides.UpdateAllow(self) then
         allow = false
     end
+    if self.Object:FindFirstChild("friendly_marker") then
+        allow = false
+    end
+    local humanoid = self.Object:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.Health <= 0 then
+        allow = false
+    end
+    
+    if ESP.VisibilityCheck then
+        local rayOrigin = cam.CFrame.Position
+        local rayDirection = (self.PrimaryPart.Position - rayOrigin).Unit * 1000
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterDescendantsInstances = {cam.Parent, self.Object}
+        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+        raycastParams.IgnoreWater = true
+        
+        local rayResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+        if rayResult and rayResult.Instance then
+            local hitParent = rayResult.Instance.Parent
+            if hitParent ~= self.Object and not hitParent:IsDescendantOf(self.Object) then
+                allow = false
+            end
+        end
+    end
+    
     if self.Player and not ESP.TeamMates and ESP:IsTeamMate(self.Player) then
         allow = false
     end
@@ -184,7 +204,6 @@ function boxBase:Update()
         color = ESP.HighlightColor
     end
 
-    --calculations--
     local cf = self.PrimaryPart.CFrame
     if ESP.FaceCamera then
         cf = CFrame.new(cf.p, cam.CFrame.p)
@@ -266,7 +285,6 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
     
-    -- Skeleton ESP
     if ESP.Skeleton and self.Object:IsA("Model") then
         local humanoid = self.Object:FindFirstChildOfClass("Humanoid")
         if humanoid and humanoid.Health > 0 then
@@ -316,7 +334,6 @@ function boxBase:Update()
                 end
             end
         else
-            -- Esconder skeleton se não houver humanoid ou estiver morto
             for i = 1, 14 do
                 local componentName = "Skeleton_" .. i
                 if self.Components[componentName] then
@@ -325,7 +342,6 @@ function boxBase:Update()
             end
         end
     else
-        -- Esconder skeleton se desabilitado
         for i = 1, 14 do
             local componentName = "Skeleton_" .. i
             if self.Components[componentName] then
@@ -343,7 +359,7 @@ function ESP:Add(obj, options)
     local box = setmetatable({
         Name = options.Name or obj.Name,
         Type = "Box",
-        Color = options.Color --[[or self:GetColor(obj)]],
+        Color = options.Color,
         Size = options.Size or self.BoxSize,
         Object = obj,
         Player = options.Player or plrs:GetPlayerFromCharacter(obj),

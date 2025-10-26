@@ -1,21 +1,12 @@
---[[
-    FrontLine ESP Loader
-    Carrega automaticamente o script completo
-    Uso: loadstring(game:HttpGet("URL_DO_SEU_REPOSITORIO/loader.lua"))()
-]]
+-- FrontLine ESP Loader v2.0
+-- Uso: loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/Script_FrontLine/refs/heads/main/loader.lua"))()
 
--- Carregar biblioteca ESP customizada
 local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/Script_FrontLine/refs/heads/main/esp-library.lua"))()
 
--- Configurações do menu
-local menuOpen = true
 local config = {
-    -- Hitbox settings (limite máximo 20 para tiros válidos)
     hitboxSize = {x = 10, y = 10, z = 10},
     transparency = 0.7,
     notifications = false,
-    
-    -- ESP settings
     espEnabled = true,
     boxes = true,
     names = true,
@@ -24,32 +15,24 @@ local config = {
     players = false,
     skeleton = true,
     teamCheck = true,
-    
-    -- Color settings
-    espColor = {r = 255, g = 0, b = 4},
+    visibilityCheck = true,
+    espColor = {r = 255, g = 165, b = 0},
     thickness = 2,
-    
-    -- Performance
     autoRemove = true
 }
 
--- Variáveis compatíveis com o código original
 local size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
 local trans = config.transparency
 local notifications = config.notifications
- 
--- Store the time when the code starts executing
 local start = os.clock()
 
--- Send a notification saying that the script is loading
 game.StarterGui:SetCore("SendNotification", {
    Title = "FrontLine ESP",
-   Text = "Loading...",
+   Text = "Carregando...",
    Icon = "",
    Duration = 3
 })
 
--- Configure ESP settings
 esp:Toggle(true)
 esp.Boxes = config.boxes
 esp.Names = config.names
@@ -57,16 +40,15 @@ esp.Distance = config.distance
 esp.Tracers = config.tracers
 esp.Players = config.players
 esp.Skeleton = config.skeleton
+esp.VisibilityCheck = config.visibilityCheck
 esp.Thickness = config.thickness
 
--- Add object listener for enemy models
 esp:AddObjectListener(workspace, {
    Name = "soldier_model",
    Type = "Model",
    ColorDynamic = function()
        return Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
    end,
- 
    PrimaryPart = function(obj)
        local root
        repeat
@@ -75,36 +57,27 @@ esp:AddObjectListener(workspace, {
        until root
        return root
    end,
-    
    Validator = function(obj)
-       task.wait(0.5)
-       -- Verificar se tem friendly_marker (team check)
-       if config.teamCheck and obj:FindFirstChild("friendly_marker") then
+       task.wait(0.3)
+       if obj:FindFirstChild("friendly_marker") then
            return false
        end
-       -- Verificar se o inimigo está vivo
        local humanoid = obj:FindFirstChildOfClass("Humanoid")
        if humanoid and humanoid.Health <= 0 then
            return false
        end
        return true
    end,
- 
-   CustomName = "?",
+   CustomName = "INIMIGO",
    IsEnabled = "enemy"
 })
- 
--- Enable the ESP for enemy models
+
 esp.enemy = true
- 
--- Wait for the game to load fully before applying hitboxes
 task.wait(1)
  
--- Função para aplicar hitbox em um modelo
 local function applyHitbox(model)
     if not model or not model:FindFirstChild("HumanoidRootPart") then return end
     
-    -- Modificar apenas as partes do modelo inimigo
     for _, part in pairs(model:GetDescendants()) do
         if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
             part.Size = size
@@ -113,7 +86,6 @@ local function applyHitbox(model)
         end
     end
     
-    -- Expandir HumanoidRootPart (hitbox principal)
     local hrp = model:FindFirstChild("HumanoidRootPart")
     if hrp then
         hrp.Size = size
@@ -122,61 +94,42 @@ local function applyHitbox(model)
     end
 end
 
--- Apply hitboxes to all existing enemy models in the workspace
 for _, v in pairs(workspace:GetDescendants()) do
    if v.Name == "soldier_model" and v:IsA("Model") and not v:FindFirstChild("friendly_marker") then
        applyHitbox(v)
    end
 end
- 
--- Function to handle when a new descendant is added to the workspace
+
 local function handleDescendantAdded(descendant)
    task.wait(1)
- 
    if descendant.Name == "soldier_model" and descendant:IsA("Model") and not descendant:FindFirstChild("friendly_marker") then
        if notifications then
            game.StarterGui:SetCore("SendNotification", {
                Title = "FrontLine ESP",
-               Text = "[Warning] New Enemy Spawned!",
+               Text = "[Aviso] Novo inimigo detectado!",
                Icon = "",
                Duration = 3
            })
        end
- 
-       -- Apply hitboxes to the new enemy model
        applyHitbox(descendant)
    end
 end
- 
--- Connect the handleDescendantAdded function
+
 task.spawn(function()
    game.Workspace.DescendantAdded:Connect(handleDescendantAdded)
 end)
- 
--- Calculate loading time
+
 local finish = os.clock()
 local time = finish - start
-local rating
-if time < 3 then
-   rating = "fast"
-elseif time < 5 then
-   rating = "acceptable"
-else
-   rating = "slow"
-end
- 
+local rating = time < 3 and "rápido" or time < 5 and "aceitável" or "lento"
+
 game.StarterGui:SetCore("SendNotification", {
    Title = "FrontLine ESP",
-   Text = string.format("Loaded in %.2f seconds (%s)", time, rating),
+   Text = string.format("Carregado em %.2f segundos (%s)", time, rating),
    Icon = "",
    Duration = 4
 })
 
--- ============================================
--- MENU UI
--- ============================================
-
--- Função para atualizar as configurações em tempo real
 local function updateESPSettings()
     esp.Boxes = config.boxes
     esp.Names = config.names
@@ -184,21 +137,19 @@ local function updateESPSettings()
     esp.Tracers = config.tracers
     esp.Players = config.players
     esp.Skeleton = config.skeleton
+    esp.VisibilityCheck = config.visibilityCheck
     esp.Thickness = config.thickness
     esp:Toggle(config.espEnabled)
-    
     size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
     trans = config.transparency
     notifications = config.notifications
 end
 
--- Criar ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FrontLineESPMenu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Proteger GUI
 if syn and syn.protect_gui then
     syn.protect_gui(ScreenGui)
 elseif gethui then
@@ -206,8 +157,6 @@ elseif gethui then
 else
     ScreenGui.Parent = game.CoreGui
 end
-
--- Frame principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
@@ -219,12 +168,10 @@ MainFrame.Active = true
 MainFrame.Draggable = false
 MainFrame.Visible = false
 
--- Arredondar cantos
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Barra de título com gradiente
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
@@ -236,7 +183,6 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleBar
 
--- Logo/Ícone
 local LogoFrame = Instance.new("Frame")
 LogoFrame.Name = "LogoFrame"
 LogoFrame.Parent = TitleBar
@@ -281,7 +227,6 @@ Subtitle.TextColor3 = Color3.fromRGB(150, 150, 160)
 Subtitle.TextSize = 11
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- Botão fechar
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
@@ -310,7 +255,6 @@ CloseButton.MouseLeave:Connect(function()
     CloseButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
 end)
 
--- Sidebar (Menu lateral)
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
@@ -323,7 +267,6 @@ local SidebarCorner = Instance.new("UICorner")
 SidebarCorner.CornerRadius = UDim.new(0, 10)
 SidebarCorner.Parent = Sidebar
 
--- Content Area (Área de conteúdo)
 local ContentFrame = Instance.new("Frame")
 ContentFrame.Name = "ContentFrame"
 ContentFrame.Parent = MainFrame
@@ -331,7 +274,6 @@ ContentFrame.BackgroundTransparency = 1
 ContentFrame.Position = UDim2.new(0, 150, 0, 45)
 ContentFrame.Size = UDim2.new(1, -150, 1, -45)
 
--- ScrollingFrame para conteúdo
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Name = "ScrollFrame"
 ScrollFrame.Parent = ContentFrame
@@ -343,7 +285,6 @@ ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 800)
 ScrollFrame.ScrollBarThickness = 4
 ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(220, 50, 50)
 
--- Layout para organizar elementos
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = ScrollFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -356,11 +297,8 @@ UIPadding.PaddingRight = UDim.new(0, 5)
 UIPadding.PaddingTop = UDim.new(0, 5)
 UIPadding.PaddingBottom = UDim.new(0, 5)
 
--- Sistema de abas
 local currentTab = "ESP"
 local tabs = {}
-
--- Função para criar botão de aba na sidebar
 local function createTabButton(name, icon, order)
     local TabButton = Instance.new("TextButton")
     TabButton.Name = name
@@ -416,17 +354,14 @@ local function createTabButton(name, icon, order)
     return TabButton
 end
 
--- Criar abas
 createTabButton("ESP", "👁", 0)
 createTabButton("Visuals", "🎨", 1)
 createTabButton("Hitbox", "🎯", 2)
 createTabButton("Settings", "⚙", 3)
 
--- Ativar primeira aba
 tabs["ESP"].BackgroundColor3 = Color3.fromRGB(220, 50, 50)
 tabs["ESP"].TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Função para criar seção (card)
 local function createSection(text, order)
     local Section = Instance.new("Frame")
     Section.Name = "Section"
@@ -464,7 +399,6 @@ local function createSection(text, order)
     return Section
 end
 
--- Função para criar checkbox (toggle switch moderno)
 local function createCheckbox(text, value, callback, order)
     local CheckboxFrame = Instance.new("Frame")
     CheckboxFrame.Name = text
@@ -544,7 +478,6 @@ local function createCheckbox(text, value, callback, order)
     return CheckboxFrame
 end
 
--- Função para criar slider
 local function createSlider(text, value, min, max, callback, order, isInt)
     local SliderFrame = Instance.new("Frame")
     SliderFrame.Name = text
@@ -634,7 +567,6 @@ local function createSlider(text, value, min, max, callback, order, isInt)
     end)
 end
 
--- Função para criar botão
 local function createButton(text, callback, order)
     local Button = Instance.new("TextButton")
     Button.Name = text
@@ -663,7 +595,6 @@ local function createButton(text, callback, order)
     end)
 end
 
--- Função para carregar conteúdo de cada aba
 function loadTabContent(tabName)
     local order = 0
     
@@ -709,6 +640,12 @@ function loadTabContent(tabName)
         
         createCheckbox("Team Check", config.teamCheck, function(value)
             config.teamCheck = value
+            updateESPSettings()
+        end, order)
+        order = order + 1
+        
+        createCheckbox("Visibility Check", config.visibilityCheck, function(value)
+            config.visibilityCheck = value
             updateESPSettings()
         end, order)
         order = order + 1
@@ -808,10 +745,7 @@ function loadTabContent(tabName)
     end
 end
 
--- Carregar conteúdo inicial
 loadTabContent("ESP")
-
--- Notificação de menu carregado
 game.StarterGui:SetCore("SendNotification", {
     Title = "FrontLine ESP",
     Text = "INSERT: Toggle Menu | END: Remove Cheat",
@@ -819,9 +753,7 @@ game.StarterGui:SetCore("SendNotification", {
     Duration = 6
 })
 
--- Função para remover completamente o cheat
 local function removeCheat()
-    -- Remover ESP
     esp:Toggle(false)
     for i,v in pairs(esp.Objects) do
         if v.Remove then
@@ -829,12 +761,10 @@ local function removeCheat()
         end
     end
     
-    -- Remover GUI
     if ScreenGui then
         ScreenGui:Destroy()
     end
     
-    -- Notificação de remoção
     game.StarterGui:SetCore("SendNotification", {
         Title = "FrontLine ESP",
         Text = "Cheat removido com sucesso!",
@@ -843,7 +773,6 @@ local function removeCheat()
     })
 end
 
--- Toggle menu com tecla INSERT e remover com END
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
