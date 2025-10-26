@@ -1,4 +1,3 @@
--- FrontLine Aimbot System
 local Aimbot = {}
 
 local Players = game:GetService("Players")
@@ -99,7 +98,11 @@ local function GetClosestPlayerToCursor()
                     continue
                 end
                 
-                local targetPart = character:FindFirstChild(Aimbot.Settings.TargetPart)
+                local targetPart = character:FindFirstChild("Head")
+                if not targetPart then
+                    targetPart = character:FindFirstChild("HumanoidRootPart")
+                end
+                
                 if targetPart then
                     if IsVisible(targetPart) then
                         local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
@@ -137,7 +140,11 @@ local function GetClosestEnemyModel()
                 continue
             end
             
-            local targetPart = obj:FindFirstChild(Aimbot.Settings.TargetPart)
+            local targetPart = obj:FindFirstChild("Head")
+            if not targetPart then
+                targetPart = obj:FindFirstChild("HumanoidRootPart")
+            end
+            
             if targetPart then
                 if IsVisible(targetPart) then
                     local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
@@ -161,7 +168,11 @@ end
 
 local function GetTargetPosition(target)
     local character = target.Character or target
-    local targetPart = character:FindFirstChild(Aimbot.Settings.TargetPart)
+    
+    local targetPart = character:FindFirstChild("Head")
+    if not targetPart then
+        targetPart = character:FindFirstChild("HumanoidRootPart")
+    end
     
     if not targetPart then return nil end
     

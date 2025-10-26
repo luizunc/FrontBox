@@ -1,5 +1,4 @@
--- FrontBox v2.0 - Advanced Combat System
--- Uso: loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/FrontBox/main/loader.lua"))()
+-- FrontBox v2.0 - Sistema Avançado de Combate
 
 local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/FrontBox/main/esp.lua"))()
 local aimbot = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/FrontBox/main/aimbot.lua"))()

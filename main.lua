@@ -1,84 +1,13 @@
---this script is designed to work with the Roblox game engine and is intended for educational purposes only. It modifies the game's behavior by applying ESP (Extra Sensory Perception) to enemy models and changing their hitbox size and transparency.
--- It also sends notifications to the player when certain events occur, such as loading the script and spawning new enemies. The script uses a custom ESP library to achieve this functionality.
--- The script is not intended for use in any malicious or harmful way and should only be used in a safe and controlled environment.
--- Please ensure that you have permission to use this script in the game you are playing and that it does not violate any terms of service or community guidelines.
-
-
--- this is my script, please do not steal it or claim it as your own. I worked hard on this and would appreciate it if you could respect my work. Thank you!p
--- kind regards, storager.kkr
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
-
--- ____ _____ ___  ____      _    ____ _____ ____    _  ___  ______       
---/ ___|_   _/ _ \|  _ \    / \  / ___| ____|  _ \  | |/ / |/ /  _ \  
---\___ \ | || | | | |_) |  / _ \| |  _|  _| | |_) | | ' /| ' /| |_) | 
- --___) || || |_| |  _ <  / ___ \ |_| | |___|  _ < _| . \| . \|  _ < 
---|____/ |_| \___/|_| \_\/_/   \_\____|_____|_| \_(_)_|\_\_|\_\_| \_\
-
-
-
-
-
--- Configurações do menu ImGui
--- ImGui menu settings
+-- FrontBox - Sistema de ESP e Hitbox
+-- storager.kkr
 local menuOpen = true
 local config = {
-    -- Hitbox settings
+    -- Configurações de Hitbox
     hitboxSize = {x = 10, y = 10, z = 10},
     transparency = 1,
     notifications = false,
     
-    -- ESP settings
+    -- Configurações de ESP
     espEnabled = false,
     boxes = false,
     names = false,
@@ -88,7 +17,7 @@ local config = {
     skeleton = false,
     teamCheck = true,
     
-    -- Color settings
+    -- Configurações de Cor
     espColor = {r = 255, g = 255, b = 255},
     thickness = 2,
     
@@ -96,13 +25,9 @@ local config = {
     autoRemove = true
 }
 
--- Variáveis compatíveis com o código original
 local size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
 local trans = config.transparency
 local notifications = config.notifications
- 
--- verbergt de tijd waneer het script geladen is
--- Store the time when the code starts executing
 local start = os.clock()
 
 game.StarterGui:SetCore("SendNotification", {
@@ -116,8 +41,6 @@ local esp = loadstring(game:HttpGet("https://raw.githubusercontent.com/luizunc/F
 esp:Toggle(true)
 
 
--- zet de ESP instellingen in
--- Configure ESP settings
 esp.Boxes = config.boxes
 esp.Names = config.names
 esp.Distance = config.distance
@@ -126,8 +49,6 @@ esp.Players = config.players
 esp.Skeleton = config.skeleton
 esp.Thickness = config.thickness
 
--- voegt een object listener toe aan de workspace om vijandige modellen te detecteren
--- Add an object listener to the workspace to detect enemy models
 esp:AddObjectListener(workspace, {
    Name = "soldier_model",
    Type = "Model",
@@ -135,8 +56,6 @@ esp:AddObjectListener(workspace, {
        return Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
    end,
  
-   -- specifeseer de primaire deel van het model als de "HumanoidRootPart" 
-   -- Specify the primary part of the model as the HumanoidRootPart
    PrimaryPart = function(obj)
        local root
        repeat
@@ -146,14 +65,11 @@ esp:AddObjectListener(workspace, {
        return root
    end,
     
-   -- usa um validator functie om te controleren of de modellen geen "friendly_marker" child hebben
-   -- Use a validator function to ensure that models do not have the "friendly_marker" child
    Validator = function(obj)
        task.wait(1)
        if obj:FindFirstChild("friendly_marker") then
            return false
        end
-       -- Verificar se o inimigo está vivo
        local humanoid = obj:FindFirstChildOfClass("Humanoid")
        if humanoid and humanoid.Health <= 0 then
            return false
@@ -161,43 +77,36 @@ esp:AddObjectListener(workspace, {
        return true
    end,
  
-   -- maak een niewe naam voor enemy modellen ( onnodig maar kan handig zijn)
-    -- Create a new name for enemy models (unnecessary but can be useful)
-   -- Set a custom name to use for the enemy models
    CustomName = "?",
  
-   -- zet de esp aan voor enemy modellen
-   -- Enable the ESP for enemy models
    IsEnabled = "enemy"
 })
  
--- Enable the ESP for enemy models
 esp.enemy = true
  
--- Wait for the game to load fully before applying hitboxes
 task.wait(1)
  
--- Apply hitboxes to all existing enemy models in the workspace
 for _, v in pairs(workspace:GetDescendants()) do
    if v.Name == "soldier_model" and v:IsA("Model") and not v:FindFirstChild("friendly_marker") then
-       local pos = v:FindFirstChild("HumanoidRootPart").Position
-       for _, bp in pairs(workspace:GetChildren()) do
-           if bp:IsA("BasePart") then
-               local distance = (bp.Position - pos).Magnitude
-               if distance <= 5 then
-                   bp.Transparency = trans
-                   bp.Size = size
-               end
+       local hrp = v:FindFirstChild("HumanoidRootPart")
+       if hrp then
+           hrp.Transparency = trans
+           hrp.Size = size
+           hrp.CanCollide = false
+       end
+       
+       for _, part in pairs(v:GetDescendants()) do
+           if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+               part.Transparency = 1
+               part.CanCollide = false
            end
        end
    end
 end
  
--- Function to handle when a new descendant is added to the workspace
 local function handleDescendantAdded(descendant)
    task.wait(1)
  
-   -- If the new descendant is an enemy model and notifications are enabled, send a notification
    if descendant.Name == "soldier_model" and descendant:IsA("Model") and not descendant:FindFirstChild("friendly_marker") then
        if notifications then
            game.StarterGui:SetCore("SendNotification", {
@@ -208,29 +117,28 @@ local function handleDescendantAdded(descendant)
            })
        end
  
-       -- Apply hitboxes to the new enemy model
-       local pos = descendant:FindFirstChild("HumanoidRootPart").Position
-       for _, bp in pairs(workspace:GetChildren()) do
-           if bp:IsA("BasePart") then
-               local distance = (bp.Position - pos).Magnitude
-               if distance <= 5 then
-                   bp.Transparency = trans
-                   bp.Size = size
-               end
+       local hrp = descendant:FindFirstChild("HumanoidRootPart")
+       if hrp then
+           hrp.Transparency = trans
+           hrp.Size = size
+           hrp.CanCollide = false
+       end
+       
+       for _, part in pairs(descendant:GetDescendants()) do
+           if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+               part.Transparency = 1
+               part.CanCollide = false
            end
        end
    end
 end
  
--- Connect the handleDescendantAdded function to the DescendantAdded event of the workspace
 task.spawn(function()
    game.Workspace.DescendantAdded:Connect(handleDescendantAdded)
 end)
  
--- Store the time when the code finishes executing
 local finish = os.clock()
  
--- Calculate how long the code took to run and determine a rating for the loading speed
 local time = finish - start
 local rating
 if time < 3 then
@@ -248,11 +156,6 @@ game.StarterGui:SetCore("SendNotification", {
    Duration = 5
 })
 
--- ============================================
--- MENU UI CUSTOMIZADO
--- ============================================
-
--- Função para atualizar as configurações em tempo real
 local function updateESPSettings()
     esp.Boxes = config.boxes
     esp.Names = config.names
@@ -263,7 +166,6 @@ local function updateESPSettings()
     esp.Thickness = config.thickness
     esp:Toggle(config.espEnabled)
     
-    -- Atualizar variáveis globais
     size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
     trans = config.transparency
     notifications = config.notifications
@@ -274,7 +176,6 @@ ScreenGui.Name = "FrontBoxMenu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Proteger GUI
 if syn and syn.protect_gui then
     syn.protect_gui(ScreenGui)
 elseif gethui then
@@ -283,7 +184,6 @@ else
     ScreenGui.Parent = game.CoreGui
 end
 
--- Frame principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
@@ -295,12 +195,10 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = false
 
--- Arredondar cantos do menu
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 8)
 MainCorner.Parent = MainFrame
 
--- Barra de título
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
@@ -324,7 +222,6 @@ Title.TextColor3 = Color3.fromRGB(100, 150, 255)
 Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Botão fechar
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
@@ -337,7 +234,6 @@ CloseButton.Text = "×"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.TextSize = 16
 
--- Arredondar botão fechar
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 4)
 CloseCorner.Parent = CloseButton
@@ -346,7 +242,6 @@ CloseButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
 end)
 
--- ScrollingFrame para conteúdo
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Name = "ScrollFrame"
 ScrollFrame.Parent = MainFrame
@@ -358,7 +253,6 @@ ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 900)
 ScrollFrame.ScrollBarThickness = 4
 ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 150, 255)
 
--- Layout para organizar elementos
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = ScrollFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -371,7 +265,6 @@ UIPadding.PaddingRight = UDim.new(0, 12)
 UIPadding.PaddingTop = UDim.new(0, 8)
 UIPadding.PaddingBottom = UDim.new(0, 8)
 
--- Função para criar separador
 local function createSeparator(text, order)
     local Separator = Instance.new("Frame")
     Separator.Name = "Separator"
@@ -398,7 +291,6 @@ local function createSeparator(text, order)
     Line.Size = UDim2.new(1, 0, 0, 1)
 end
 
--- Função para criar checkbox
 local function createCheckbox(text, value, callback, order)
     local CheckboxFrame = Instance.new("Frame")
     CheckboxFrame.Name = text
@@ -443,7 +335,6 @@ local function createCheckbox(text, value, callback, order)
     return Checkbox
 end
 
--- Função para criar slider
 local function createSlider(text, value, min, max, callback, order, isInt)
     local SliderFrame = Instance.new("Frame")
     SliderFrame.Name = text
@@ -528,7 +419,6 @@ local function createSlider(text, value, min, max, callback, order, isInt)
     end)
 end
 
--- Função para criar botão
 local function createButton(text, callback, order)
     local Button = Instance.new("TextButton")
     Button.Name = text
@@ -557,10 +447,8 @@ local function createButton(text, callback, order)
     end)
 end
 
--- Criar elementos do menu
 local order = 0
 
--- ESP Settings
 createSeparator("ESP SETTINGS", order)
 order = order + 1
 
@@ -618,7 +506,6 @@ createSlider("Thickness", config.thickness, 1, 5, function(value)
 end, order, true)
 order = order + 1
 
--- Color Settings
 createSeparator("COLOR SETTINGS", order)
 order = order + 1
 
@@ -637,7 +524,6 @@ createSlider("Blue", config.espColor.b, 0, 255, function(value)
 end, order, true)
 order = order + 1
 
--- Hitbox Settings
 createSeparator("HITBOX SETTINGS", order)
 order = order + 1
 
@@ -665,7 +551,6 @@ createSlider("Transparency", config.transparency, 0, 1, function(value)
 end, order, false)
 order = order + 1
 
--- Notifications
 createSeparator("NOTIFICATIONS", order)
 order = order + 1
 
@@ -675,7 +560,6 @@ createCheckbox("Enable Notifications", config.notifications, function(value)
 end, order)
 order = order + 1
 
--- Performance
 createSeparator("PERFORMANCE", order)
 order = order + 1
 
@@ -685,21 +569,23 @@ createCheckbox("Auto Remove", config.autoRemove, function(value)
 end, order)
 order = order + 1
 
--- Botões
 createSeparator("ACTIONS", order)
 order = order + 1
 
 createButton("Apply to All Enemies", function()
     for _, v in pairs(workspace:GetDescendants()) do
         if v.Name == "soldier_model" and v:IsA("Model") and not v:FindFirstChild("friendly_marker") then
-            local pos = v:FindFirstChild("HumanoidRootPart").Position
-            for _, bp in pairs(workspace:GetChildren()) do
-                if bp:IsA("BasePart") then
-                    local distance = (bp.Position - pos).Magnitude
-                    if distance <= 5 then
-                        bp.Transparency = trans
-                        bp.Size = size
-                    end
+            local hrp = v:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.Transparency = trans
+                hrp.Size = size
+                hrp.CanCollide = false
+            end
+            
+                 for _, part in pairs(v:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.Transparency = 1
+                    part.CanCollide = false
                 end
             end
         end
@@ -721,9 +607,7 @@ game.StarterGui:SetCore("SendNotification", {
     Duration = 6
 })
 
--- Função para remover completamente o cheat
 local function removeCheat()
-    -- Remover ESP
     esp:Toggle(false)
     for i,v in pairs(esp.Objects) do
         if v.Remove then
@@ -731,7 +615,6 @@ local function removeCheat()
         end
     end
     
-    -- Remover GUI
     if ScreenGui then
         ScreenGui:Destroy()
     end
@@ -744,7 +627,6 @@ local function removeCheat()
     })
 end
 
--- Toggle menu com tecla INSERT e remover com END
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
