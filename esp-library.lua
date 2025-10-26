@@ -7,6 +7,7 @@ local ESP = {
     Color = Color3.fromRGB(255, 51, 255),
     FaceCamera = false,
     Names = true,
+    Distance = true,
     TeamColor = true,
     Thickness = 2,
     AttachShift = 1,
@@ -228,17 +229,25 @@ function boxBase:Update()
             self.Components.Name.Position = Vector2.new(TagPos.X, TagPos.Y)
             self.Components.Name.Text = self.Name
             self.Components.Name.Color = color
-            
-            self.Components.Distance.Visible = true
-            self.Components.Distance.Position = Vector2.new(TagPos.X, TagPos.Y + 14)
-            self.Components.Distance.Text = math.floor((cam.CFrame.p - cf.p).magnitude) .."m away"
-            self.Components.Distance.Color = color
         else
             self.Components.Name.Visible = false
-            self.Components.Distance.Visible = false
         end
     else
         self.Components.Name.Visible = false
+    end
+    
+    if ESP.Distance then
+        local BottomPos, Vis6 = WorldToViewportPoint(cam, locs.BottomLeft.p)
+        
+        if Vis6 then
+            self.Components.Distance.Visible = true
+            self.Components.Distance.Position = Vector2.new(BottomPos.X, BottomPos.Y + 5)
+            self.Components.Distance.Text = math.floor((cam.CFrame.p - cf.p).magnitude) .."m"
+            self.Components.Distance.Color = color
+        else
+            self.Components.Distance.Visible = false
+        end
+    else
         self.Components.Distance.Visible = false
     end
     

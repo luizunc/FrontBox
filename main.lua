@@ -65,16 +65,18 @@ local menuOpen = true
 local config = {
     -- Hitbox settings
     hitboxSize = {x = 10, y = 10, z = 10},
-    transparency = 1,
+    transparency = 0.7,
     notifications = false,
     
     -- ESP settings
     espEnabled = true,
     boxes = true,
     names = true,
+    distance = true,
     tracers = false,
     players = false,
     skeleton = true,
+    teamCheck = true,
     
     -- Color settings
     espColor = {r = 255, g = 0, b = 4},
@@ -111,8 +113,10 @@ esp:Toggle(true)
 -- Configure ESP settings
 esp.Boxes = config.boxes
 esp.Names = config.names
+esp.Distance = config.distance
 esp.Tracers = config.tracers
 esp.Players = config.players
+esp.Skeleton = config.skeleton
 esp.Thickness = config.thickness
 
 -- voegt een object listener toe aan de workspace om vijandige modellen te detecteren
@@ -246,6 +250,7 @@ game.StarterGui:SetCore("SendNotification", {
 local function updateESPSettings()
     esp.Boxes = config.boxes
     esp.Names = config.names
+    esp.Distance = config.distance
     esp.Tracers = config.tracers
     esp.Players = config.players
     esp.Skeleton = config.skeleton
@@ -572,6 +577,12 @@ createCheckbox("Show Names", config.names, function(value)
 end, order)
 order = order + 1
 
+createCheckbox("Show Distance", config.distance, function(value)
+    config.distance = value
+    updateESPSettings()
+end, order)
+order = order + 1
+
 createCheckbox("Show Tracers", config.tracers, function(value)
     config.tracers = value
     updateESPSettings()
@@ -586,6 +597,12 @@ order = order + 1
 
 createCheckbox("Show Skeleton", config.skeleton, function(value)
     config.skeleton = value
+    updateESPSettings()
+end, order)
+order = order + 1
+
+createCheckbox("Team Check", config.teamCheck, function(value)
+    config.teamCheck = value
     updateESPSettings()
 end, order)
 order = order + 1
