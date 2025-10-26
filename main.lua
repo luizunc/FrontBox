@@ -59,11 +59,34 @@
 
 
 
--- zet hitbox grootte, transparantie niveau en notificatie status
--- Set hitbox size, transparency level, and notification status
-local size = Vector3.new(10, 10, 10)
-local trans = 1
-local notifications = false
+-- Configurações do menu ImGui
+-- ImGui menu settings
+local menuOpen = true
+local config = {
+    -- Hitbox settings
+    hitboxSize = {x = 10, y = 10, z = 10},
+    transparency = 1,
+    notifications = false,
+    
+    -- ESP settings
+    espEnabled = true,
+    boxes = true,
+    names = true,
+    tracers = false,
+    players = false,
+    
+    -- Color settings
+    espColor = {r = 255, g = 0, b = 4},
+    thickness = 2,
+    
+    -- Performance
+    autoRemove = true
+}
+
+-- Variáveis compatíveis com o código original
+local size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
+local trans = config.transparency
+local notifications = config.notifications
  
 -- verbergt de tijd waneer het script geladen is
 -- Store the time when the code starts executing
@@ -85,17 +108,18 @@ esp:Toggle(true)
 
 -- zet de ESP instellingen in
 -- Configure ESP settings
-esp.Boxes = true
-esp.Names = true
-esp.Tracers = false
-esp.Players = false
+esp.Boxes = config.boxes
+esp.Names = config.names
+esp.Tracers = config.tracers
+esp.Players = config.players
+esp.Thickness = config.thickness
 
 -- voegt een object listener toe aan de workspace om vijandige modellen te detecteren
 -- Add an object listener to the workspace to detect enemy models
 esp:AddObjectListener(workspace, {
    Name = "soldier_model",
    Type = "Model",
-   Color = Color3.fromRGB(255, 0, 4),
+   Color = Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b),
  
    -- specifeseer de primaire deel van het model als de "HumanoidRootPart" 
    -- Specify the primary part of the model as the HumanoidRootPart
@@ -205,3 +229,173 @@ game.StarterGui:SetCore("SendNotification", {
    Icon = "",
    Duration = 5
 })
+
+-- ============================================
+-- MENU IMGUI
+-- ============================================
+
+-- Carregar biblioteca ImGui
+local ImGui = loadstring(game:HttpGet("https://raw.githubusercontent.com/depthso/Roblox-ImGUI/main/ImGui.lua"))()
+
+-- Criar janela do menu
+local Window = ImGui:CreateWindow({
+    Title = "FrontLine ESP Config",
+    Size = UDim2.new(0, 450, 0, 500),
+    Position = UDim2.new(0.5, -225, 0.5, -250),
+    Resizable = false,
+    AutoSize = false
+})
+
+-- Função para atualizar as configurações em tempo real
+local function updateESPSettings()
+    esp.Boxes = config.boxes
+    esp.Names = config.names
+    esp.Tracers = config.tracers
+    esp.Players = config.players
+    esp.Thickness = config.thickness
+    esp:Toggle(config.espEnabled)
+    
+    -- Atualizar variáveis globais
+    size = Vector3.new(config.hitboxSize.x, config.hitboxSize.y, config.hitboxSize.z)
+    trans = config.transparency
+    notifications = config.notifications
+end
+
+-- Seção ESP Settings
+Window:Separator("ESP Settings")
+
+Window:Checkbox("Enable ESP", config.espEnabled, function(value)
+    config.espEnabled = value
+    updateESPSettings()
+end)
+
+Window:Checkbox("Show Boxes", config.boxes, function(value)
+    config.boxes = value
+    updateESPSettings()
+end)
+
+Window:Checkbox("Show Names", config.names, function(value)
+    config.names = value
+    updateESPSettings()
+end)
+
+Window:Checkbox("Show Tracers", config.tracers, function(value)
+    config.tracers = value
+    updateESPSettings()
+end)
+
+Window:Checkbox("Show Players", config.players, function(value)
+    config.players = value
+    updateESPSettings()
+end)
+
+Window:Slider("Thickness", config.thickness, 1, 5, function(value)
+    config.thickness = value
+    updateESPSettings()
+end)
+
+-- Seção Color Settings
+Window:Separator("Color Settings")
+
+Window:Slider("Red", config.espColor.r, 0, 255, function(value)
+    config.espColor.r = value
+    -- Atualizar cor do ESP
+    esp.Color = Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
+end)
+
+Window:Slider("Green", config.espColor.g, 0, 255, function(value)
+    config.espColor.g = value
+    esp.Color = Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
+end)
+
+Window:Slider("Blue", config.espColor.b, 0, 255, function(value)
+    config.espColor.b = value
+    esp.Color = Color3.fromRGB(config.espColor.r, config.espColor.g, config.espColor.b)
+end)
+
+-- Seção Hitbox Settings
+Window:Separator("Hitbox Settings")
+
+Window:Slider("Hitbox X", config.hitboxSize.x, 1, 50, function(value)
+    config.hitboxSize.x = value
+    updateESPSettings()
+end)
+
+Window:Slider("Hitbox Y", config.hitboxSize.y, 1, 50, function(value)
+    config.hitboxSize.y = value
+    updateESPSettings()
+end)
+
+Window:Slider("Hitbox Z", config.hitboxSize.z, 1, 50, function(value)
+    config.hitboxSize.z = value
+    updateESPSettings()
+end)
+
+Window:Slider("Transparency", config.transparency, 0, 1, function(value)
+    config.transparency = value
+    updateESPSettings()
+end)
+
+-- Seção Notifications
+Window:Separator("Notifications")
+
+Window:Checkbox("Enable Notifications", config.notifications, function(value)
+    config.notifications = value
+    updateESPSettings()
+end)
+
+-- Seção Performance
+Window:Separator("Performance")
+
+Window:Checkbox("Auto Remove", config.autoRemove, function(value)
+    config.autoRemove = value
+    esp.AutoRemove = value
+end)
+
+-- Botão para recarregar configurações
+Window:Button("Apply to All Enemies", function()
+    -- Reaplicar hitboxes em todos os inimigos existentes
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "soldier_model" and v:IsA("Model") and not v:FindFirstChild("friendly_marker") then
+            local pos = v:FindFirstChild("HumanoidRootPart").Position
+            for _, bp in pairs(workspace:GetChildren()) do
+                if bp:IsA("BasePart") then
+                    local distance = (bp.Position - pos).Magnitude
+                    if distance <= 5 then
+                        bp.Transparency = trans
+                        bp.Size = size
+                    end
+                end
+            end
+        end
+    end
+    
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Script",
+        Text = "Settings applied to all enemies!",
+        Icon = "",
+        Duration = 3
+    })
+end)
+
+-- Botão para fechar o menu
+Window:Button("Close Menu", function()
+    Window:Destroy()
+end)
+
+-- Notificação de menu carregado
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Script",
+    Text = "Press INSERT to toggle menu",
+    Icon = "",
+    Duration = 5
+})
+
+-- Toggle menu com tecla INSERT
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Insert then
+        menuOpen = not menuOpen
+        Window:SetVisible(menuOpen)
+    end
+end)
